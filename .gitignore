@@ -3,7 +3,10 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
+# Keep npm lockfiles committed for reproducible CI installs.
+!package-lock.json
+!frontend/package-lock.json
+!backend/package-lock.json
 yarn.lock
 
 # Environment Variables
