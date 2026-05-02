@@ -1,4 +1,4 @@
-REGISTRY ?= <your-registry>
+REGISTRY ?= dstixx05
 BACKEND_IMAGE = $(REGISTRY)/intermediate-backend:latest
 FRONTEND_IMAGE = $(REGISTRY)/intermediate-frontend:latest
 

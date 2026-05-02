@@ -7,6 +7,78 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: db
+  namespace: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: db
+          image: postgres:15-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: DB_PASS
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB_NAME
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U "$POSTGRES_USER"
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U "$POSTGRES_USER"
+            initialDelaySeconds: 20
+            timeoutSeconds: 5
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: app
+spec:
+  selector:
+    app: db
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: backend
   namespace: app
 spec:
@@ -21,10 +93,35 @@ spec:
     spec:
       containers:
         - name: backend
-          image: dstixx05/e-commerce-frontend:latest
+          image: dstixx05/e-commerce-backend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
+          env:
+            - name: PORT
+              value: "5000"
+            - name: DB_HOST
+              value: db
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB_USER
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB_NAME
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: DB_PASS
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB_PORT
           livenessProbe:
             httpGet:
               path: /
@@ -38,6 +135,12 @@ spec:
               port: 5000
             initialDelaySeconds: 5
             timeoutSeconds: 3
+          startupProbe:
+            httpGet:
+              path: /
+              port: 5000
+            failureThreshold: 30
+            periodSeconds: 5
 
 ---
 apiVersion: v1
@@ -103,7 +206,8 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 3000
-  type: ClusterIP
+      nodePort: 30080
+  type: NodePort
 
 ---
 # Optional Ingress (requires an Ingress controller). Replace host with your domain.

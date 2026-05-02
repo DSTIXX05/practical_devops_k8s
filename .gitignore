@@ -72,3 +72,6 @@ temp/
 # Misc
 .cache/
 .parcel-cache/
+
+db-secret.example.yaml
+db-config.yaml
