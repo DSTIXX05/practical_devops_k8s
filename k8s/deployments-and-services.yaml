@@ -93,7 +93,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: dstixx05/e-commerce-backend:latest
+          image: dstixx05/ecommerce-backend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
@@ -175,7 +175,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: dstixx05/e-commerce-frontend:latest
+          image: dstixx05/ecommerce-frontend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
@@ -206,13 +206,12 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 3000
-      nodePort: 30080
   type: NodePort
 
 ---
 # Optional Ingress (requires an Ingress controller). Replace host with your domain.
 # apiVersion: networking.k8s.io/v1
-# kind: Ingress
+# kind: Ingressdocker pull dstixx05/e-commerce-backend:latest
 # metadata:
 #   name: app-ingress
 #   namespace: app
