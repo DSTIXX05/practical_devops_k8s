@@ -63,7 +63,7 @@ jobs:
   build-and-push-images:
     runs-on: ubuntu-latest
     needs: [backend-test, frontend-test]
-    # if: ${{ github.event_name == 'pull_request' && github.action == 'closed' && github.event.pull_request.merged == true }}
+    if: ${{ github.event_name == 'pull_request'}}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
