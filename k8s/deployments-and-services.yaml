@@ -4,12 +4,28 @@ metadata:
   name: app
 
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-headless
+  namespace: app
+spec:
+  clusterIP: None
+  selector:
+    app: db
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+
+---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: db
   namespace: app
 spec:
+  serviceName: db-headless
   replicas: 1
   selector:
     matchLabels:
@@ -41,6 +57,9 @@ spec:
                 configMapKeyRef:
                   name: db-config
                   key: DB_NAME
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
           readinessProbe:
             exec:
               command:
@@ -59,6 +78,15 @@ spec:
             initialDelaySeconds: 20
             timeoutSeconds: 5
             periodSeconds: 10
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 2Gi
 
 ---
 apiVersion: v1
@@ -93,7 +121,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: dstixx05/e-commerce-backend:latest
+          image: dstixx05/ecommerce-backend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
@@ -141,6 +169,11 @@ spec:
               port: 5000
             failureThreshold: 30
             periodSeconds: 5
+          resources:
+            requests:
+              cpu: 25m
+            limits:
+              cpu: 100m
 
 ---
 apiVersion: v1
@@ -175,10 +208,15 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: dstixx05/e-commerce-frontend:latest
+          image: dstixx05/ecommerce-frontend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
+          resources:
+            requests:
+              cpu: 25m
+            limits:
+              cpu: 100m
           livenessProbe:
             httpGet:
               path: /
@@ -206,13 +244,12 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 3000
-      nodePort: 30080
   type: NodePort
 
 ---
 # Optional Ingress (requires an Ingress controller). Replace host with your domain.
 # apiVersion: networking.k8s.io/v1
-# kind: Ingress
+# kind: Ingressdocker pull dstixx05/e-commerce-backend:latest
 # metadata:
 #   name: app-ingress
 #   namespace: app
