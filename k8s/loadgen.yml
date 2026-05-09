@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-loadgen
+  namespace: app
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: backend-loadgen
+  template:
+    metadata:
+      labels:
+        app: backend-loadgen
+    spec:
+      containers:
+        - name: loadgen
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              i=0
+              while true; do
+                wget -q -O- http://backend:5000/ >/dev/null
+                i=$((i+1))
+                if [ $((i % 100)) -eq 0 ]; then
+                  echo "$i requests sent"
+                fi
+              done

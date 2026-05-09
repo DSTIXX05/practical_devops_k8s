@@ -141,6 +141,11 @@ spec:
               port: 5000
             failureThreshold: 30
             periodSeconds: 5
+          resources:
+            requests:
+              cpu: 25m
+            limits:
+              cpu: 100m
 
 ---
 apiVersion: v1
@@ -179,6 +184,11 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
+          resources:
+            requests:
+              cpu: 25m
+            limits:
+              cpu: 100m
           livenessProbe:
             httpGet:
               path: /
