@@ -1,0 +1,87 @@
+namespace:
+  create: true
+  name: app
+
+imagePullSecrets: []
+
+config:
+  dbUser: postgres
+  dbName: ecommerce_db
+  dbPort: "5432"
+
+secret:
+  create: true
+  dbPass: change-me
+
+db:
+  image:
+    repository: postgres
+    tag: 15-alpine
+    pullPolicy: IfNotPresent
+  service:
+    port: 5432
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClassName: ""
+  resources: {}
+
+backend:
+  image:
+    repository: dstixx05/ecommerce-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 2
+  service:
+    port: 5000
+  env:
+    port: "5000"
+  resources:
+    requests:
+      cpu: 25m
+    limits:
+      cpu: 100m
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    cpuAverageUtilization: 50
+
+frontend:
+  image:
+    repository: dstixx05/ecommerce-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 2
+  service:
+    port: 80
+    targetPort: 3000
+    type: LoadBalancer
+  resources:
+    requests:
+      cpu: 25m
+    limits:
+      cpu: 100m
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    cpuAverageUtilization: 50
+  ingress:
+    enabled: false
+    className: ""
+    host: example.local
+    path: /
+
+observability:
+  serviceMonitor:
+    enabled: true
+    release: kube-prometheus-stack
+    interval: 30s
+    scrapeTimeout: 10s
+
+metrics:
+  enabled: true
+
+nameOverride: ""
+fullnameOverride: ""

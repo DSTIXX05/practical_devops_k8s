@@ -78,15 +78,9 @@ spec:
             initialDelaySeconds: 20
             timeoutSeconds: 5
             periodSeconds: 10
-  volumeClaimTemplates:
-    - metadata:
-        name: postgres-data
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 2Gi
+      volumes:
+        - name: postgres-data
+          emptyDir: {}
 
 ---
 apiVersion: v1
@@ -122,7 +116,7 @@ spec:
       containers:
         - name: backend
           image: dstixx05/ecommerce-backend:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 5000
           env:
@@ -185,7 +179,8 @@ spec:
   selector:
     app: backend
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 5000
       targetPort: 5000
   type: ClusterIP
@@ -244,7 +239,7 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 3000
-  type: NodePort
+  type: LoadBalancer
 
 ---
 # Optional Ingress (requires an Ingress controller). Replace host with your domain.
