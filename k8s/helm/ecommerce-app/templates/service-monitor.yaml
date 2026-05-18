@@ -1,0 +1,23 @@
+{{- if .Values.observability.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "ecommerce-app.fullname" . }}-backend
+  namespace: {{ include "ecommerce-app.namespace" . }}
+  labels:
+    {{- include "ecommerce-app.labels" . | nindent 4 }}
+    release: {{ .Values.observability.serviceMonitor.release | quote }}
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ include "ecommerce-app.namespace" . }}
+  selector:
+    matchLabels:
+      {{- include "ecommerce-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: backend
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.observability.serviceMonitor.interval | quote }}
+      scrapeTimeout: {{ .Values.observability.serviceMonitor.scrapeTimeout | quote }}
+{{- end }}
