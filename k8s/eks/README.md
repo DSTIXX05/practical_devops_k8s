@@ -24,34 +24,23 @@ kubectl get nodes
 kubectl get ns
 ```
 
-## 3. Create ECR repositories
+## 3. Build and publish images
 
-Create two repositories for the app images:
+This repo is set up to use Docker Hub images. The GitHub Actions workflow in [`.github/workflows/main.yml`](../../.github/workflows/main.yml) builds and pushes the backend and frontend images for you when you push to `test_pipeline`.
 
-```bash
-aws ecr create-repository --repository-name ecommerce-backend --region eu-west-1
-aws ecr create-repository --repository-name ecommerce-frontend --region eu-west-1
-```
-
-## 4. Build and push images
-
-Replace `<account-id>` with your AWS account number and then tag and push:
+If you want to do it manually, tag and push to Docker Hub instead of ECR:
 
 ```bash
-aws_account_id=$(aws sts get-caller-identity --query Account --output text)
-backend_repo="$aws_account_id.dkr.ecr.eu-west-1.amazonaws.com/ecommerce-backend"
-frontend_repo="$aws_account_id.dkr.ecr.eu-west-1.amazonaws.com/ecommerce-frontend"
+docker login
 
-aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin "$aws_account_id.dkr.ecr.eu-west-1.amazonaws.com"
+docker build -t dstixx05/ecommerce-backend:latest -f ../backend/Dockerfile ../backend
+docker build -t dstixx05/ecommerce-frontend:latest -f ../frontend/Dockerfile ../frontend
 
-docker build -t "$backend_repo:latest" -f ../backend/Dockerfile ../backend
-docker build -t "$frontend_repo:latest" -f ../frontend/Dockerfile ../frontend
-
-docker push "$backend_repo:latest"
-docker push "$frontend_repo:latest"
+docker push dstixx05/ecommerce-backend:latest
+docker push dstixx05/ecommerce-frontend:latest
 ```
 
-## 5. Deploy to EKS
+## 4. Deploy to EKS
 
 For the first deployment, the Helm chart is the cleanest path:
 
@@ -59,12 +48,17 @@ For the first deployment, the Helm chart is the cleanest path:
 helm upgrade --install ecommerce-app ./k8s/helm/ecommerce-app \
   --namespace app --create-namespace \
   -f k8s/eks/values-eks.yaml \
-  --set backend.image.repository="$backend_repo" \
-  --set frontend.image.repository="$frontend_repo" \
   --set secret.dbPass='<your-db-password>'
 ```
 
-## 6. Check the rollout
+If you want to override the image names explicitly, set them to your Docker Hub repositories:
+
+```bash
+--set backend.image.repository=dstixx05/ecommerce-backend \
+--set frontend.image.repository=dstixx05/ecommerce-frontend
+```
+
+## 5. Check the rollout
 
 ```bash
 kubectl get pods -n app
@@ -72,7 +66,7 @@ kubectl get svc -n app
 kubectl get hpa -n app
 ```
 
-## 7. Install metrics-server for HPA
+## 6. Install metrics-server for HPA
 
 The HPA objects in this repo rely on CPU metrics from metrics-server. Install it before you expect autoscaling to work:
 
@@ -86,4 +80,5 @@ If your cluster uses strict API server validation or has certificate issues, you
 
 - The frontend service is `LoadBalancer`, so EKS will create a public AWS load balancer automatically.
 - Keep the backend and database services internal as `ClusterIP`.
+- If your GitHub Actions workflow is still limited to a specific branch, make sure your push targets that branch or update the trigger in `.github/workflows/main.yml`.
 - If you want ingress-based routing later, I can add the AWS Load Balancer Controller path next.

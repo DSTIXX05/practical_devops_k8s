@@ -175,6 +175,8 @@ kind: Service
 metadata:
   name: backend
   namespace: app
+  labels:
+    app: backend
 spec:
   selector:
     app: backend
