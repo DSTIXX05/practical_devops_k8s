@@ -12,14 +12,26 @@ eksctl create cluster -f k8s/eks/cluster-config.yaml
 
 That creates:
 
-- a cluster named `ecommerce-observability`
+- a cluster named `e-commerce-observability`
 - a managed node group for the app workloads
 - OIDC enabled for add-ons and future IAM integrations
+- the EBS CSI driver add-on, so persistent volumes can be provisioned from EBS
+
+## 1a. Create the EBS StorageClass
+
+After the cluster comes up, apply the default EBS-backed StorageClass:
+
+```bash
+kubectl apply -f k8s/eks/ebs-storageclass.yaml
+kubectl get storageclass
+```
+
+This chart expects the database to use the cluster default StorageClass unless you override it in values.
 
 ## 2. Verify access
 
 ```bash
-aws eks update-kubeconfig --region eu-west-1 --name ecommerce-observability
+aws eks update-kubeconfig --region eu-north-1 --name e-commerce-observability
 kubectl get nodes
 kubectl get ns
 ```

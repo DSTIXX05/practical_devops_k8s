@@ -1,0 +1,50 @@
+flowchart LR
+  subgraph External
+    User[User / Browser]
+  end
+
+  subgraph AWS
+    LB["ALB / ELB\n(LoadBalancer Service)"]
+  end
+
+  subgraph K8s["EKS Cluster (control plane)"]
+    subgraph NS_app["Namespace: app"]
+      FE_Svc["ecommerce-app-frontend Service\n(LoadBalancer)"]
+      FE_Deploy["Frontend Deployment\n(nginx + React)"]
+      BE_Svc["ecommerce-app-backend Service\n(ClusterIP)"]
+      BE_Deploy["Backend Deployment\n(Node.js, /metrics)"]
+      DB_Headless["DB Headless Service"]
+      DB_Stateful["Postgres StatefulSet\nPVC -> EBS PV"]
+      HPA["HPA (backend/frontend)"]
+      MetricsServer["metrics-server"]
+      SM["ServiceMonitor (for backend)"]
+    end
+
+    subgraph NS_mon["Namespace: monitoring"]
+      Prom["Prometheus (kube-prometheus-stack)"]
+      Graf["Grafana"]
+    end
+
+    CSI["ebs.csi.aws.com (EBS CSI Driver)"]
+    EBS[("EBS Volume / PV")]
+    Helm["Helm release: ecommerce-app"]
+  end
+
+  User --> LB
+  LB --> FE_Svc
+  FE_Svc --> FE_Deploy
+  FE_Deploy --> BE_Svc
+  BE_Svc --> BE_Deploy
+  BE_Deploy --> DB_Headless
+  DB_Headless --> DB_Stateful
+  DB_Stateful --> EBS
+  EBS --> CSI
+  BE_Deploy --> SM
+  SM --> Prom
+  Prom --> Graf
+  MetricsServer --> HPA
+  Prom --> HPA
+  HPA --> BE_Svc
+  Helm -. manages .-> FE_Deploy
+  Helm -. manages .-> BE_Deploy
+  Helm -. manages .-> DB_Stateful

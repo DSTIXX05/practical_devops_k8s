@@ -45,6 +45,8 @@ spec:
                 configMapKeyRef:
                   name: {{ include "ecommerce-app.fullname" . }}-db-config
                   key: DB_NAME
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
@@ -68,6 +70,12 @@ spec:
             periodSeconds: 10
           resources:
             {{- toYaml .Values.db.resources | nindent 12 }}
+      {{- if not .Values.db.persistence.enabled }}
+      volumes:
+        - name: postgres-data
+          emptyDir: {}
+      {{- end }}
+{{- if .Values.db.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:
         name: postgres-data
@@ -80,3 +88,4 @@ spec:
         resources:
           requests:
             storage: {{ .Values.db.persistence.size | quote }}
+{{- end }}

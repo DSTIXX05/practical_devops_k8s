@@ -4,6 +4,18 @@ namespace:
 
 imagePullSecrets: []
 
+storageClass:
+  create: true
+  name: gp3
+  isDefaultClass: true
+  provisioner: ebs.csi.aws.com
+  volumeBindingMode: WaitForFirstConsumer
+  allowVolumeExpansion: true
+  reclaimPolicy: Delete
+  parameters:
+    type: gp3
+    fsType: ext4
+
 config:
   dbUser: postgres
   dbName: ecommerce_db
@@ -11,7 +23,7 @@ config:
 
 secret:
   create: true
-  dbPass: change-me
+  dbPass: postgres
 
 db:
   image:
@@ -23,7 +35,7 @@ db:
   persistence:
     enabled: true
     size: 2Gi
-    storageClassName: ""
+    storageClassName: gp3
   resources: {}
 
 backend:

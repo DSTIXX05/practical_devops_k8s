@@ -23,12 +23,12 @@ db:
   persistence:
     enabled: true
     size: 2Gi
-    storageClassName: gp2
+    storageClassName: gp3
   resources: {}
 
 backend:
   image:
-    repository: <account-id>.dkr.ecr.eu-west-1.amazonaws.com/ecommerce-backend
+    repository: dstixx05/ecommerce-backend
     tag: latest
     pullPolicy: IfNotPresent
   replicas: 2
@@ -49,7 +49,7 @@ backend:
 
 frontend:
   image:
-    repository: <account-id>.dkr.ecr.eu-west-1.amazonaws.com/ecommerce-frontend
+    repository: dstixx05/ecommerce-frontend
     tag: latest
     pullPolicy: IfNotPresent
   replicas: 2
